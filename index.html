@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Helpdesk PDB - Portal Izin Digital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      /* THEME: UNAIR LIGHT (Blue, Yellow, White) */
+      :root {
+        --unair-blue: #003B73;
+        --unair-yellow: #FFC700;
+        --bg-light: #F8FAFC;
+        --surface-white: #FFFFFF;
+      }
+      
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-light); /* Slate 50 */
+        color: #1e293b; /* Slate 800 */
+        background-image: 
+          radial-gradient(#cbd5e1 1px, transparent 1px);
+        background-size: 24px 24px;
+        min-height: 100vh;
+      }
+      
+      .font-mono {
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      /* UNAIR Card Style - Light */
+      .panel-base {
+        background-color: var(--surface-white);
+        border: 1px solid #e2e8f0; /* Slate 200 */
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+      }
+      
+      /* Solid Button Style */
+      .btn-primary {
+        background-color: #003B73;
+        color: white;
+        transition: all 0.2s;
+        box-shadow: 0 4px 0 #002347;
+        border: 1px solid #004b91;
+      }
+      .btn-primary:hover {
+        background-color: #004b91;
+        transform: translateY(-1px);
+      }
+      .btn-primary:active {
+        transform: translateY(2px);
+        box-shadow: 0 0 0 #002347;
+      }
+
+      /* Secondary/Yellow Button Style */
+      .btn-secondary {
+        background-color: #FFC700;
+        color: #003B73;
+        font-weight: 800;
+        transition: all 0.2s;
+        box-shadow: 0 4px 0 #b38b00;
+        border: 1px solid #e6b300;
+      }
+      .btn-secondary:hover {
+        background-color: #ffd633;
+        transform: translateY(-1px);
+      }
+      .btn-secondary:active {
+        transform: translateY(2px);
+        box-shadow: 0 0 0 #b38b00;
+      }
+
+      .animate-fadeIn {
+        animation: fadeIn 0.4s ease-out forwards;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: #f1f5f9; }
+      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.37.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
