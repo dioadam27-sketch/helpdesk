@@ -1,14 +1,15 @@
 import React from 'react';
-import { GraduationCap, LogOut, LayoutDashboard, PlusCircle, History, AlertTriangle, LayoutGrid } from 'lucide-react';
+import { LogOut, LayoutDashboard, PlusCircle, History, AlertTriangle, LayoutGrid } from 'lucide-react';
 
 interface NavbarProps {
   currentView: 'menu' | 'form' | 'history' | 'admin' | 'complain';
   setCurrentView: (view: any) => void;
   userRole: 'student' | 'admin' | null;
   onLogout: () => void;
+  logoSrc: string;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, userRole, onLogout }) => {
+const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, userRole, onLogout, logoSrc }) => {
   if (!userRole) return null;
 
   return (
@@ -17,8 +18,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, userRole, 
         
         {/* LOGO */}
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => userRole === 'student' && setCurrentView('menu')}>
-          <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm border border-white/20">
-             <GraduationCap className="w-6 h-6 text-[#FFC700]" />
+          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-white/20">
+             <img src={logoSrc} alt="Logo" className="w-full h-full object-contain" />
           </div>
           <div className="flex flex-col">
             <h1 className="text-sm font-extrabold text-white tracking-widest uppercase font-mono leading-tight">

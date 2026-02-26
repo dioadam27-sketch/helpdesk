@@ -13,7 +13,7 @@ type UserRole = 'student' | 'admin' | null;
 type View = 'menu' | 'form' | 'history' | 'admin' | 'complain';
 
 // URL Logo Strategi
-const LOGO_MAIN = "https://ppk2ipe.unair.ac.id/gambar/UNAIR_BRANDMARK_2025-02.png";
+const LOGO_MAIN = "https://pkkii.pendidikan.unair.ac.id/website/logo.jpeg";
 const LOGO_FALLBACK = "https://upload.wikimedia.org/wikipedia/commons/e/e6/Logo_Universitas_Airlangga.png";
 
 const App: React.FC = () => {
@@ -30,9 +30,22 @@ const App: React.FC = () => {
   const [authError, setAuthError] = useState('');
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showMigrationConfirm, setShowMigrationConfirm] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
+  
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   const [logoSrc, setLogoSrc] = useState(LOGO_MAIN);
   const [logoError, setLogoError] = useState(false);
+  const [isLongLoading, setIsLongLoading] = useState(false);
+
+  useEffect(() => {
+    if (showSuccessModal) {
+      const timer = setTimeout(() => setShowSuccessModal(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessModal]);
 
   const handleLogoLoadError = () => {
     if (logoSrc === LOGO_MAIN) {
@@ -41,6 +54,16 @@ const App: React.FC = () => {
       setLogoError(true);
     }
   };
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isLoading) {
+      timer = setTimeout(() => setIsLongLoading(true), 5000); // Reduce to 5 seconds
+    } else {
+      setIsLongLoading(false);
+    }
+    return () => clearTimeout(timer);
+  }, [isLoading]);
 
   useEffect(() => {
     if ((userRole === 'student' && currentView === 'history') || userRole === 'admin') {
@@ -73,32 +96,40 @@ const App: React.FC = () => {
   };
 
   const handleFormSubmit = async (newRequest: LeaveRequest) => {
-    setIsLoading(true);
-    const success = await api.createRequest(newRequest);
-    setIsLoading(false); 
+    // Optimistic UI Update: Show success immediately
+    setCurrentView('history'); 
+    setShowSuccessModal(true); 
+    
+    // Add to local state immediately so it shows up in History
+    const reqLite = { ...newRequest, evidenceBase64: undefined, hasEvidence: true };
+    setRequests(prev => [...prev, reqLite]);
 
-    if (success) {
-      await loadDataSmart(); 
-      setCurrentView('history'); 
-      setShowSuccessModal(true); 
-    } else {
-      alert("Koneksi ke server bermasalah, namun data tersimpan di browser.");
-      await loadDataSmart();
-      setCurrentView('history');
-    }
+    // Background API Call
+    api.createRequest(newRequest).then(success => {
+      if (!success) {
+        console.warn("Koneksi ke server bermasalah, data tersimpan di browser.");
+      }
+      // Silently refresh data in background
+      loadDataSmart(); 
+    });
   };
 
   const handleComplaintSubmit = async (complaint: ComplaintRequest) => {
-    setIsLoading(true);
-    const success = await api.createComplaint(complaint);
-    if (success) {
-        alert("Laporan komplain berhasil dikirim. Terima kasih atas masukan Anda.");
-        await loadDataSmart(); 
-        setCurrentView('history'); 
-    } else {
-        alert("Koneksi bermasalah. Laporan disimpan secara offline.");
-    }
-    setIsLoading(false);
+    // Optimistic UI Update: Show success immediately
+    setCurrentView('history'); 
+    setShowSuccessModal(true);
+
+    // Add to local state immediately
+    setComplaints(prev => [...prev, complaint]);
+
+    // Background API Call
+    api.createComplaint(complaint).then(success => {
+      if (!success) {
+        console.warn("Koneksi bermasalah. Laporan disimpan secara offline.");
+      }
+      // Silently refresh data in background
+      loadDataSmart();
+    });
   };
 
   const handleStatusUpdate = async (id: string, newStatus: RequestStatus, reason?: string) => {
@@ -169,6 +200,16 @@ const App: React.FC = () => {
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#003B73]/5 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#FFC700]/10 rounded-full blur-[100px] -ml-32 -mb-32 pointer-events-none"></div>
         
+        <div className="absolute top-6 right-6 z-20">
+          <button 
+            onClick={() => handleRoleSelect('admin')}
+            className="p-3 bg-white hover:bg-slate-50 text-slate-400 hover:text-[#003B73] border border-slate-200 rounded-full shadow-sm hover:shadow-md transition-all"
+            title="Admin Login"
+          >
+            <Lock className="w-5 h-5" />
+          </button>
+        </div>
+
         <div className="relative z-10 max-w-2xl w-full">
           <div className="text-center mb-10">
             {/* LOGO UNAIR */}
@@ -201,41 +242,22 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col items-center gap-6">
             <button 
               onClick={() => handleRoleSelect('student')}
-              className="group relative bg-white border border-slate-200 rounded-3xl p-8 text-left hover:border-[#003B73] transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden flex flex-col h-full"
+              className="w-full max-w-md group relative bg-white border border-slate-200 rounded-3xl p-8 text-left hover:border-[#003B73] transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden"
             >
               <div className="absolute top-0 right-0 p-32 bg-[#003B73]/5 rounded-full blur-2xl -mr-16 -mt-16 group-hover:bg-[#003B73]/10 transition-all"></div>
-              <div className="relative z-10 flex flex-col flex-grow">
+              <div className="relative z-10 flex flex-col">
                 <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center border border-blue-100 mb-6 group-hover:scale-110 transition-transform">
                   <UserCircle2 className="w-8 h-8 text-[#003B73]" />
                 </div>
                 <h3 className="text-2xl font-bold text-slate-800 mb-2">Mahasiswa</h3>
-                <p className="text-slate-500 text-sm mb-6 flex-grow">
+                <p className="text-slate-500 text-sm mb-6">
                   Akses formulir perizinan dan layanan pengaduan masalah (Helpdesk).
                 </p>
-                <div className="flex items-center text-[#003B73] text-sm font-bold mt-auto">
+                <div className="flex items-center text-[#003B73] text-sm font-bold">
                   Masuk Portal <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </button>
-
-            <button 
-              onClick={() => handleRoleSelect('admin')}
-              className="group relative bg-white border border-slate-200 rounded-3xl p-8 text-left hover:border-[#FFC700] transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden flex flex-col h-full"
-            >
-              <div className="absolute top-0 right-0 p-32 bg-[#FFC700]/5 rounded-full blur-2xl -mr-16 -mt-16 group-hover:bg-[#FFC700]/10 transition-all"></div>
-              <div className="relative z-10 flex flex-col flex-grow">
-                <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center border border-amber-100 mb-6 group-hover:scale-110 transition-transform">
-                  <ShieldCheck className="w-8 h-8 text-[#b38b00]" />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-2">Admin</h3>
-                <p className="text-slate-500 text-sm mb-6 flex-grow">
-                  Dashboard validasi surat izin dan tinjauan laporan komplain.
-                </p>
-                <div className="flex items-center text-amber-600 text-sm font-bold mt-auto">
-                  Login Admin <Lock className="w-3 h-3 ml-2 inline" />
                 </div>
               </div>
             </button>
@@ -302,6 +324,7 @@ const App: React.FC = () => {
         setCurrentView={setCurrentView} 
         userRole={userRole}
         onLogout={handleLogout}
+        logoSrc={logoSrc}
       />
       
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4 animate-fadeIn relative">
@@ -343,6 +366,26 @@ const App: React.FC = () => {
                <div className="flex flex-col items-center">
                  <p className="text-slate-500 text-sm font-bold tracking-widest uppercase">Memuat Data</p>
                  <p className="text-slate-400 text-[10px]">Universitas Airlangga</p>
+                 
+                 {isLongLoading && (
+                   <div className="mt-4 flex flex-col items-center gap-3">
+                     <div className="px-4 py-2 bg-amber-50 border border-amber-100 rounded-lg text-center max-w-xs animate-pulse">
+                       <p className="text-amber-600 text-xs font-medium">
+                         Koneksi server sedang lambat...
+                       </p>
+                       <p className="text-amber-500 text-[10px]">
+                         Mohon tunggu, sedang menyinkronkan data terbaru.
+                       </p>
+                     </div>
+                     
+                     <button 
+                       onClick={() => setIsLoading(false)}
+                       className="text-[10px] text-slate-400 hover:text-[#003B73] underline underline-offset-2 transition-colors"
+                     >
+                       Lewati & Masuk ke Menu
+                     </button>
+                   </div>
+                 )}
                </div>
              </div>
            </div>
@@ -373,41 +416,158 @@ const App: React.FC = () => {
             )}
 
             {userRole === 'admin' && (
-              <AdminDashboard 
-                requests={requests} 
-                complaints={complaints}
-                onUpdateStatus={handleStatusUpdate}
-                onUpdateComplaint={handleComplaintUpdate}
-                onRefresh={loadDataSmart}
-                onDeleteRequest={handleDeleteRequest}
-                onDeleteComplaint={handleDeleteComplaint}
-              />
+              <>
+                <div className="mb-4 flex justify-end">
+                   <button 
+                     onClick={() => setShowMigrationConfirm(true)}
+                     disabled={isMigrating}
+                     className="text-xs text-slate-400 hover:text-slate-600 underline flex items-center gap-2"
+                   >
+                     {isMigrating ? (
+                       <><Loader2 className="w-3 h-3 animate-spin" /> Sedang Migrasi...</>
+                     ) : (
+                       <>[Admin] Tarik Data Lama dari GSheets</>
+                     )}
+                   </button>
+                   
+                   <button 
+                     onClick={() => setShowImportConfirm(true)}
+                     disabled={isImporting}
+                     className="text-xs text-emerald-500 hover:text-emerald-700 underline flex items-center gap-2 ml-4"
+                   >
+                     {isImporting ? (
+                       <><Loader2 className="w-3 h-3 animate-spin" /> Sedang Import...</>
+                     ) : (
+                       <>[Admin] Import CSV Manual</>
+                     )}
+                   </button>
+                </div>
+                <AdminDashboard 
+                  requests={requests} 
+                  complaints={complaints}
+                  onUpdateStatus={handleStatusUpdate}
+                  onUpdateComplaint={handleComplaintUpdate}
+                  onRefresh={loadDataSmart}
+                  onDeleteRequest={handleDeleteRequest}
+                  onDeleteComplaint={handleDeleteComplaint}
+                />
+              </>
             )}
           </>
         )}
 
-        {/* Success Modal Notification */}
-        {showSuccessModal && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white border border-emerald-100 rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center relative">
+        {/* Migration Confirmation Modal */}
+        {showMigrationConfirm && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl relative">
+               <h3 className="text-lg font-bold text-slate-800 mb-2">Tarik Data Lama?</h3>
+               <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+                 Aplikasi akan mengambil semua data dari Google Sheets lama dan menyimpannya ke database baru. 
+                 <br/><br/>
+                 <span className="text-amber-600 font-medium">Perhatian:</span> Proses ini mungkin memakan waktu beberapa detik hingga menit tergantung jumlah data.
+               </p>
                
-               <div className="relative z-10">
-                 <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-emerald-100">
-                   <CheckCircle2 className="w-8 h-8 text-emerald-600" />
-                 </div>
-                 
-                 <h3 className="text-xl font-bold text-slate-800 mb-2">Permohonan Terkirim!</h3>
-                 <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-                   Data Anda berhasil dikirim dan sedang <strong>menunggu persetujuan admin</strong>.
-                 </p>
-                 
+               <div className="flex gap-3">
                  <button
-                   onClick={() => setShowSuccessModal(false)}
-                   className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all shadow-md text-sm tracking-wide"
+                   onClick={() => setShowMigrationConfirm(false)}
+                   className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors text-sm"
                  >
-                   MENGERTI
+                   Batal
+                 </button>
+                 <button
+                   onClick={async () => {
+                     setShowMigrationConfirm(false);
+                     setIsMigrating(true);
+                     try {
+                       const res = await api.migrateData();
+                       alert(res.message);
+                       loadDataSmart();
+                     } catch (e) {
+                       alert("Gagal migrasi data");
+                     } finally {
+                       setIsMigrating(false);
+                     }
+                   }}
+                   className="flex-1 py-2.5 bg-[#003B73] hover:bg-[#004b91] text-white font-bold rounded-xl transition-colors text-sm"
+                 >
+                   Ya, Import Data
                  </button>
                </div>
+            </div>
+          </div>
+        )}
+
+        {/* CSV Import Confirmation Modal */}
+        {showImportConfirm && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl relative">
+               <h3 className="text-lg font-bold text-slate-800 mb-2">Import CSV Manual?</h3>
+               <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+                 Aplikasi akan memasukkan data CSV yang telah disiapkan ke dalam database.
+                 <br/><br/>
+                 <span className="text-emerald-600 font-medium">Info:</span> Gunakan fitur ini jika migrasi otomatis gagal atau lambat.
+               </p>
+               
+               <div className="flex gap-3">
+                 <button
+                   onClick={() => setShowImportConfirm(false)}
+                   className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors text-sm"
+                 >
+                   Batal
+                 </button>
+                 <button
+                   onClick={async () => {
+                     setShowImportConfirm(false);
+                     setIsImporting(true);
+                     try {
+                       const res = await api.importCSV(); // New API call
+                       alert(res.message);
+                       loadDataSmart();
+                     } catch (e: any) {
+                       alert(e.message || "Gagal import CSV");
+                     } finally {
+                       setIsImporting(false);
+                     }
+                   }}
+                   className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors text-sm"
+                 >
+                   Ya, Import CSV
+                 </button>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success Notification (Top Toast) */}
+        {showSuccessModal && (
+          <div className="fixed top-24 left-0 right-0 z-[60] flex justify-center px-4 pointer-events-none animate-slideDown">
+            <div className="bg-white border border-emerald-100 rounded-2xl p-4 max-w-sm w-full shadow-2xl flex items-start gap-4 pointer-events-auto relative overflow-hidden">
+               {/* Progress bar effect */}
+               <div className="absolute bottom-0 left-0 h-1 bg-emerald-500 animate-progress"></div>
+               
+               <div className="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center shrink-0 border border-emerald-100">
+                 <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+               </div>
+               
+               <div className="flex-grow">
+                 <h3 className="text-sm font-bold text-slate-800 mb-1">Berhasil Terkirim!</h3>
+                 <p className="text-slate-500 text-[11px] leading-relaxed mb-2">
+                   Data diterima. Silakan cek menu <strong>Riwayat</strong> secara berkala.
+                 </p>
+                 <button
+                   onClick={() => setShowSuccessModal(false)}
+                   className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider"
+                 >
+                   Tutup
+                 </button>
+               </div>
+
+               <button 
+                 onClick={() => setShowSuccessModal(false)}
+                 className="text-slate-400 hover:text-slate-600 transition-colors"
+               >
+                 <X className="w-4 h-4" />
+               </button>
             </div>
           </div>
         )}

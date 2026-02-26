@@ -51,6 +51,7 @@ function doPost(e) {
       const data = content.data;
 
       if (action === 'create') return createRequest(data);
+      if (action === 'upload') return uploadFile(data); // NEW ACTION
       if (action === 'createComplaint') return createComplaint(data);
       if (action === 'updateStatus') return updateStatus(content.id, content.status, content.rejectionReason);
       if (action === 'updateComplaint') return updateComplaint(content.id, content.adminNote);
@@ -138,6 +139,30 @@ function getComplaintsData() {
 }
 
 // --- WRITE FUNCTIONS ---
+
+function uploadFile(data) {
+  try {
+    if (!DRIVE_FOLDER_ID) throw new Error("Folder ID belum disetting");
+    const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    
+    // Parse Base64
+    const parts = data.evidenceBase64.split(",");
+    const contentType = parts[0].split(":")[1].split(";")[0]; 
+    const base64Data = parts[1];
+    
+    const fileName = `${data.studentName}_${data.studentId}_${Date.now()}.jpg`;
+    const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), contentType, fileName);
+    
+    const file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    const fileUrl = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
+    
+    return response({status: 'success', url: fileUrl});
+  } catch (e) {
+    return response({status: 'error', message: e.toString()});
+  }
+}
 
 function createRequest(data) {
   const sheet = getOrInsertSheet(SHEET_REQUESTS);

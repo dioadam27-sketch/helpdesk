@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LeaveRequest, RequestStatus, ComplaintRequest } from '../types';
-import { CheckCircle2, AlertTriangle, Search, User, BookOpen, X } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Search, User, BookOpen, X, MessageSquareX } from 'lucide-react';
 
 interface HistoryProps {
   requests: LeaveRequest[];
@@ -127,6 +127,19 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
                    <div className="pl-6">
                      <p className="text-xs font-medium text-slate-500 italic">"{req.reason}"</p>
                    </div>
+
+                   {/* Row 5: Rejection Reason */}
+                   {req.status === RequestStatus.REJECTED && req.rejectionReason && (
+                     <div className="mt-3 pt-3 border-t border-slate-100 pl-0 md:pl-6">
+                       <div className="bg-rose-50 border border-rose-200 p-3 rounded-lg flex items-start gap-3">
+                         <MessageSquareX className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                         <div className="flex flex-col">
+                           <span className="text-[10px] text-rose-600 font-bold uppercase mb-1 tracking-wider">Alasan Penolakan</span>
+                           <p className="text-xs text-slate-700 leading-relaxed">"{req.rejectionReason}"</p>
+                         </div>
+                       </div>
+                     </div>
+                   )}
                 </div>
               </div>
             ))
