@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { LeaveRequest, RequestStatus, ComplaintRequest } from '../types';
-import { Check, X, Eye, Loader2, RefreshCw, Trash2, AlertTriangle, AlertOctagon, FileImage, ExternalLink, ImageOff, MessageSquareX, MessageSquare, CheckCircle2, ArrowUpDown, Calendar } from 'lucide-react';
+import { Check, X, Eye, Loader2, RefreshCw, Trash2, AlertTriangle, AlertOctagon, FileImage, ExternalLink, ImageOff, MessageSquareX, MessageSquare, CheckCircle2, ArrowUpDown, Calendar, Download } from 'lucide-react';
 import { api } from '../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface AdminDashboardProps {
   requests: LeaveRequest[];
@@ -37,6 +39,76 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
     setIsRefreshing(true);
     await onRefresh();
     setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  const handleExport = () => {
+    const doc = new jsPDF();
+
+    if (activeTab === 'requests') {
+      const tableColumn = ["ID", "Tanggal", "Nama", "NIM", "Kelas", "Matkul", "Jenis", "Alasan", "Status"];
+      const tableRows: any[] = [];
+
+      requests.forEach(req => {
+        const requestData = [
+          req.id,
+          new Date(Number(req.createdAt) || 0).toLocaleString('id-ID'),
+          req.studentName,
+          req.studentId,
+          req.studentClass,
+          req.courseName,
+          req.type,
+          req.reason,
+          req.status
+        ];
+        tableRows.push(requestData);
+      });
+
+      doc.text("Laporan Izin Masuk", 14, 15);
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [0, 59, 115] } // #003B73
+      });
+      doc.save(`Data_Izin_Masuk_${new Date().toISOString().split('T')[0]}.pdf`);
+
+    } else {
+      const tableColumn = ["ID", "Tanggal", "Nama", "NIM", "Kelas", "Kategori", "Deskripsi", "Tanggapan"];
+      const tableRows: any[] = [];
+
+      complaints.forEach(comp => {
+        // Handle timestamp correctly - check if it's numeric (milliseconds) or string date
+        let dateStr = '-';
+        if (comp.createdAt) {
+          const isNumeric = /^\d+$/.test(comp.createdAt);
+          const date = new Date(isNumeric ? parseInt(comp.createdAt) : comp.createdAt);
+          dateStr = date.toLocaleString('id-ID');
+        }
+
+        const complaintData = [
+          comp.id,
+          dateStr,
+          comp.studentName,
+          comp.studentId,
+          comp.studentClass,
+          comp.category,
+          comp.description,
+          comp.adminNote || '-'
+        ];
+        tableRows.push(complaintData);
+      });
+
+      doc.text("Laporan Komplain", 14, 15);
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [255, 199, 0], textColor: [0, 59, 115] } // #FFC700
+      });
+      doc.save(`Data_Komplain_${new Date().toISOString().split('T')[0]}.pdf`);
+    }
   };
 
   const handleViewProof = async (req: LeaveRequest) => {
@@ -185,6 +257,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
       <div className="flex justify-between items-center pb-4 border-b border-slate-200">
         <h2 className="text-xl font-extrabold text-[#003B73] uppercase tracking-wide">Administrator Console</h2>
         <div className="flex gap-2">
+           <button 
+             onClick={handleExport}
+             className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 shadow-sm text-xs font-bold text-slate-600 transition-colors"
+             title="Export Data ke CSV"
+           >
+             <Download className="w-3.5 h-3.5" />
+             EXPORT
+           </button>
            <button 
              onClick={() => setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest')}
              className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 shadow-sm text-xs font-bold text-slate-600 transition-colors"

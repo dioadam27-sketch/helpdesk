@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LeaveRequest, RequestStatus, ComplaintRequest } from '../types';
-import { CheckCircle2, AlertTriangle, Search, User, BookOpen, X, MessageSquareX } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Search, User, BookOpen, X, MessageSquareX, ArrowUpDown } from 'lucide-react';
 
 interface HistoryProps {
   requests: LeaveRequest[];
@@ -10,6 +10,7 @@ interface HistoryProps {
 const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
   const [activeTab, setActiveTab] = useState<'requests' | 'complaints'>('requests');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
   const getStatusBadge = (status: RequestStatus) => {
     switch (status) {
@@ -32,6 +33,10 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
       dateStr.includes(term) ||
       req.status.toLowerCase().includes(term)
     );
+  }).sort((a, b) => {
+    const dateA = new Date(Number(a.createdAt) || 0).getTime();
+    const dateB = new Date(Number(b.createdAt) || 0).getTime();
+    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
   });
 
   const filteredComplaints = complaints.filter(comp => {
@@ -43,6 +48,10 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
       comp.description.toLowerCase().includes(term) ||
       dateStr.includes(term)
     );
+  }).sort((a, b) => {
+    const dateA = new Date(Number(a.createdAt) || 0).getTime();
+    const dateB = new Date(Number(b.createdAt) || 0).getTime();
+    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
   });
 
   return (
@@ -67,21 +76,32 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
           </button>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative w-full sm:w-64">
-           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-           <input 
-             type="text" 
-             placeholder={activeTab === 'requests' ? "Cari nama, matkul..." : "Cari nama, keluhan..."}
-             value={searchTerm}
-             onChange={(e) => setSearchTerm(e.target.value)}
-             className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 focus:border-[#003B73] focus:ring-1 focus:ring-[#003B73] outline-none placeholder:text-slate-400 transition-all shadow-sm"
-           />
-           {searchTerm && (
-             <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-               <X className="w-3 h-3" />
-             </button>
-           )}
+        <div className="flex gap-2 w-full sm:w-auto">
+          {/* Sort Button */}
+          <button 
+            onClick={() => setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest')}
+            className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 shadow-sm text-xs font-bold text-slate-600 transition-colors whitespace-nowrap"
+          >
+            <ArrowUpDown className="w-3.5 h-3.5" />
+            {sortOrder === 'newest' ? 'TERBARU' : 'TERLAMA'}
+          </button>
+
+          {/* Search Bar */}
+          <div className="relative w-full sm:w-64">
+             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+             <input 
+               type="text" 
+               placeholder={activeTab === 'requests' ? "Cari nama, matkul..." : "Cari nama, keluhan..."}
+               value={searchTerm}
+               onChange={(e) => setSearchTerm(e.target.value)}
+               className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 focus:border-[#003B73] focus:ring-1 focus:ring-[#003B73] outline-none placeholder:text-slate-400 transition-all shadow-sm"
+             />
+             {searchTerm && (
+               <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                 <X className="w-3 h-3" />
+               </button>
+             )}
+          </div>
         </div>
       </div>
 
@@ -94,7 +114,7 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
               </p>
             </div>
           ) : (
-            filteredRequests.slice().reverse().map((req) => (
+            filteredRequests.map((req) => (
               <div key={req.id} className="bg-white border border-slate-200 p-5 rounded-xl hover:border-[#003B73]/50 transition-colors shadow-sm">
                 <div className="w-full">
                    {/* Row 1: Status & Date */}
@@ -156,7 +176,7 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
               </p>
             </div>
            ) : (
-             filteredComplaints.slice().reverse().map((comp) => (
+             filteredComplaints.map((comp) => (
                <div key={comp.id} className="bg-white border border-slate-200 p-5 rounded-xl hover:border-amber-400 transition-colors shadow-sm">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
                     <div className="flex items-center gap-2">
