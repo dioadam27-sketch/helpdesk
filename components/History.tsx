@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LeaveRequest, RequestStatus, ComplaintRequest } from '../types';
-import { CheckCircle2, AlertTriangle, Search, User, BookOpen, X, MessageSquareX, ArrowUpDown } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Search, User, BookOpen, X, MessageSquareX, MessageSquare, ArrowUpDown } from 'lucide-react';
 
 interface HistoryProps {
   requests: LeaveRequest[];
@@ -195,10 +195,15 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded uppercase">{comp.category}</span>
-                        {comp.isResolved && (
+                        {comp.isResolved ? (
                           <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded flex items-center gap-1">
                             <CheckCircle2 className="w-3 h-3" />
                             TERTANGANI
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3 animate-pulse" />
+                            PROSES
                           </span>
                         )}
                         <span className="text-[10px] font-bold text-slate-400">{formatDate(comp.createdAt)}</span>
@@ -220,10 +225,10 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
                   </div>
 
                   {/* Display Admin Response if available */}
-                  {comp.adminNote && (
+                  {comp.adminNote && comp.adminNote.trim() !== '' && (
                     <div className="mt-4 pt-3 border-t border-slate-100 ml-0 md:ml-7">
                         <div className="bg-[#003B73]/5 border border-[#003B73]/10 p-3 rounded-lg flex items-start gap-3">
-                            <CheckCircle2 className="w-4 h-4 text-[#003B73] shrink-0 mt-0.5" />
+                            <MessageSquare className="w-4 h-4 text-[#003B73] shrink-0 mt-0.5" />
                             <div className="flex flex-col">
                                 <span className="text-[10px] text-[#003B73] font-bold uppercase mb-1 tracking-wider">Tanggapan Admin</span>
                                 <p className="text-xs text-slate-700 leading-relaxed">"{comp.adminNote}"</p>

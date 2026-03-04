@@ -55,6 +55,9 @@ switch ($action) {
     case 'updateComplaint':
         updateComplaint($pdo, $input);
         break;
+    case 'fixDatabase':
+        fixDatabase($pdo);
+        break;
     case 'deleteRequest':
         deleteRequest($pdo, $input['id'] ?? '');
         break;
@@ -127,8 +130,8 @@ function createComplaint($pdo, $data) {
     }
 
     try {
-        $sql = "INSERT INTO complaints (id, studentName, studentId, studentClass, category, description, adminNote, createdAt) 
-                VALUES (:id, :studentName, :studentId, :studentClass, :category, :description, :adminNote, :createdAt)";
+        $sql = "INSERT INTO complaints (id, studentName, studentId, studentClass, category, description, adminNote, isResolved, createdAt) 
+                VALUES (:id, :studentName, :studentId, :studentClass, :category, :description, :adminNote, :isResolved, :createdAt)";
         
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
@@ -139,6 +142,7 @@ function createComplaint($pdo, $data) {
             ':category' => $data['category'],
             ':description' => $data['description'],
             ':adminNote' => $data['adminNote'] ?? '',
+            ':isResolved' => $data['isResolved'] ?? 0,
             ':createdAt' => $data['createdAt']
         ]);
 
@@ -176,6 +180,7 @@ function updateStatus($pdo, $input) {
 function updateComplaint($pdo, $input) {
     $id = $input['id'] ?? '';
     $adminNote = $input['adminNote'] ?? '';
+    $isResolved = isset($input['isResolved']) ? ($input['isResolved'] ? 1 : 0) : null;
 
     if (!$id) {
         echo json_encode(['status' => 'error', 'message' => 'Missing ID']);
@@ -183,14 +188,42 @@ function updateComplaint($pdo, $input) {
     }
 
     try {
-        $sql = "UPDATE complaints SET adminNote = :adminNote WHERE id = :id";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            ':adminNote' => $adminNote,
-            ':id' => $id
-        ]);
+        if ($isResolved !== null && $adminNote !== '') {
+            $sql = "UPDATE complaints SET adminNote = :adminNote, isResolved = :isResolved WHERE id = :id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':adminNote' => $adminNote, ':isResolved' => $isResolved, ':id' => $id]);
+        } else if ($isResolved !== null) {
+            $sql = "UPDATE complaints SET isResolved = :isResolved WHERE id = :id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':isResolved' => $isResolved, ':id' => $id]);
+        } else {
+            $sql = "UPDATE complaints SET adminNote = :adminNote WHERE id = :id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':adminNote' => $adminNote, ':id' => $id]);
+        }
 
         echo json_encode(['status' => 'success']);
+    } catch (Exception $e) {
+        // If column is missing, try to add it automatically
+        if (strpos($e->getMessage(), 'Unknown column') !== false) {
+            try {
+                $pdo->exec("ALTER TABLE complaints ADD COLUMN isResolved BOOLEAN DEFAULT FALSE");
+                // Retry the update once
+                updateComplaint($pdo, $input);
+                return;
+            } catch (Exception $e2) {
+                echo json_encode(['status' => 'error', 'message' => 'Gagal update & gagal tambah kolom: ' . $e2->getMessage()]);
+                return;
+            }
+        }
+        echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    }
+}
+
+function fixDatabase($pdo) {
+    try {
+        $pdo->exec("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS isResolved BOOLEAN DEFAULT FALSE");
+        echo json_encode(['status' => 'success', 'message' => 'Database fixed (isResolved column added)']);
     } catch (Exception $e) {
         echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
     }

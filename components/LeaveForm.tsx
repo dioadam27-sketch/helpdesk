@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, Zap, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { UploadCloud, Zap, Loader2, CheckCircle2, AlertTriangle, Download } from 'lucide-react';
 import { LeaveType, LeaveRequest, RequestStatus } from '../types';
 import { api } from '../services/api';
 
@@ -124,6 +124,26 @@ const LeaveForm: React.FC<LeaveFormProps> = ({ onSubmit }) => {
 
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
         
+        {/* Info Box with Download Link */}
+        <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl flex items-start gap-3">
+          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-blue-100 shrink-0 shadow-sm">
+            <Download className="w-4 h-4 text-[#003B73]" />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs text-slate-700 leading-relaxed">
+              Pastikan Anda sudah mengunduh dan mengisi <strong className="text-[#003B73]">Form Surat Ijin</strong> resmi sebelum mengunggah bukti.
+            </p>
+            <a 
+              href="https://docs.google.com/document/d/1_OPrUEvodEgeMeqmbCyYhciBYMTwLSXL/edit" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center text-[10px] font-bold text-[#003B73] uppercase tracking-wider mt-2 hover:underline"
+            >
+              Download Template Di Sini
+            </a>
+          </div>
+        </div>
+
         {/* Grid Layout for Form */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1.5">

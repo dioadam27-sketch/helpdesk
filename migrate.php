@@ -73,8 +73,8 @@ try {
     }
 
     // 3. Insert Complaints
-    $stmtComp = $pdo->prepare("INSERT IGNORE INTO complaints (id, studentName, studentId, studentClass, category, description, adminNote, createdAt) 
-            VALUES (:id, :studentName, :studentId, :studentClass, :category, :description, :adminNote, :createdAt)");
+    $stmtComp = $pdo->prepare("INSERT IGNORE INTO complaints (id, studentName, studentId, studentClass, category, description, adminNote, isResolved, createdAt) 
+            VALUES (:id, :studentName, :studentId, :studentClass, :category, :description, :adminNote, :isResolved, :createdAt)");
 
     foreach ($complaints as $comp) {
         $stmtComp->execute([
@@ -85,6 +85,7 @@ try {
             ':category' => $comp['category'],
             ':description' => $comp['description'],
             ':adminNote' => $comp['adminNote'] ?? '',
+            ':isResolved' => ($comp['isResolved'] ?? false) ? 1 : 0,
             ':createdAt' => $comp['createdAt']
         ]);
         if ($stmtComp->rowCount() > 0) $compCount++;

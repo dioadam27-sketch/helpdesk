@@ -52,10 +52,17 @@ export const api = {
         hasEvidence: !!r.evidenceUrl
       })) : [];
       
-      const complaints = Array.isArray(data.complaints) ? data.complaints.map((c: any) => ({
-        ...c,
-        isResolved: c.isResolved === true || c.isResolved === 'true' || c.isResolved === 1 || c.isResolved === '1'
-      })) : [];
+      const complaints = Array.isArray(data.complaints) ? data.complaints.map((c: any) => {
+        // Normalize property names (handle both camelCase and snake_case from DB)
+        const adminNote = c.adminNote || c.admin_note || c.adminnote || '';
+        const isResolvedRaw = c.isResolved !== undefined ? c.isResolved : (c.is_resolved !== undefined ? c.is_resolved : false);
+        
+        return {
+          ...c,
+          adminNote: String(adminNote).trim(),
+          isResolved: isResolvedRaw === true || isResolvedRaw === 'true' || isResolvedRaw === 1 || isResolvedRaw === '1'
+        };
+      }) : [];
 
       // Cache metadata only
       localStorage.setItem('leaveRequests_lite', JSON.stringify(requests));

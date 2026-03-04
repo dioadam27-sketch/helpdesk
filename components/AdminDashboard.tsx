@@ -492,10 +492,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                        <AlertTriangle className="w-3 h-3 text-amber-500" />
                        <span className="text-xs font-bold text-amber-600">{comp.category}</span>
-                       {comp.isResolved && (
+                       {comp.isResolved ? (
                          <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 rounded flex items-center gap-1">
                            <CheckCircle2 className="w-3 h-3" />
                            TERTANGANI
+                         </span>
+                       ) : (
+                         <span className="text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
+                           <Loader2 className="w-3 h-3 animate-pulse" />
+                           PROSES
                          </span>
                        )}
                        <span className="ml-auto flex items-center gap-1 text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">
@@ -506,9 +511,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
                     <p className="text-sm text-slate-700 leading-relaxed font-medium line-clamp-3">{comp.description}</p>
                     <p className="text-xs text-slate-400 mt-2">Oleh: {comp.studentName} ({comp.studentId} - {comp.studentClass})</p>
 
-                     {comp.adminNote && (
+                     {comp.adminNote && comp.adminNote.trim() !== '' && (
                        <div className="mt-3 bg-[#003B73]/5 border border-[#003B73]/10 p-2.5 rounded flex items-start gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-[#003B73] shrink-0 mt-0.5" />
+                          <MessageSquare className="w-4 h-4 text-[#003B73] shrink-0 mt-0.5" />
                           <div className="flex flex-col">
                              <span className="text-[10px] text-[#003B73] font-bold uppercase mb-0.5">Tanggapan Admin</span>
                              <p className="text-xs text-slate-600">"{comp.adminNote}"</p>

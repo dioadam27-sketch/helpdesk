@@ -7,7 +7,7 @@ import AdminDashboard from './components/AdminDashboard';
 import StudentMenu from './components/StudentMenu';
 import { LeaveRequest, RequestStatus, ComplaintRequest } from './types';
 import { api } from './services/api'; 
-import { UserCircle2, ShieldCheck, ArrowRight, Lock, KeyRound, X, Loader2, Unplug, CloudCog, GraduationCap, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { UserCircle2, ShieldCheck, ArrowRight, Lock, KeyRound, X, Loader2, Unplug, CloudCog, GraduationCap, CheckCircle2, ChevronDown, ChevronUp, Download } from 'lucide-react';
 
 type UserRole = 'student' | 'admin' | null;
 type View = 'menu' | 'form' | 'history' | 'admin' | 'complain';
@@ -269,6 +269,25 @@ const App: React.FC = () => {
                 </div>
               </div>
             </button>
+
+            {/* Download Link on Landing Page */}
+            <a 
+              href="https://docs.google.com/document/d/1_OPrUEvodEgeMeqmbCyYhciBYMTwLSXL/edit" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="w-full max-w-md flex items-center justify-between p-5 bg-white border border-slate-200 rounded-2xl hover:border-[#003B73] hover:shadow-lg transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100 group-hover:bg-blue-100 transition-colors">
+                  <Download className="w-5 h-5 text-[#003B73]" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800">Download Form Surat Ijin</h4>
+                  <p className="text-[10px] text-slate-500">Template resmi permohonan izin kuliah</p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-[#003B73] group-hover:translate-x-1 transition-all" />
+            </a>
           </div>
         </div>
         
@@ -342,9 +361,9 @@ const App: React.FC = () => {
           <div className="mb-6 animate-slideDown">
             <div className="bg-white border border-emerald-200 rounded-2xl shadow-sm overflow-hidden">
               {/* Accordion Header */}
-              <button 
+              <div 
                 onClick={() => setIsSuccessAccordionExpanded(!isSuccessAccordionExpanded)}
-                className="w-full bg-emerald-50 px-5 py-4 flex items-center justify-between border-b border-emerald-100 hover:bg-emerald-100/50 transition-colors"
+                className="w-full bg-emerald-50 px-5 py-4 flex items-center justify-between border-b border-emerald-100 hover:bg-emerald-100/50 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-emerald-100 shadow-sm">
@@ -370,7 +389,7 @@ const App: React.FC = () => {
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-              </button>
+              </div>
 
               {/* Accordion Body */}
               {isSuccessAccordionExpanded && (

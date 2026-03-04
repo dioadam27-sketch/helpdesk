@@ -28,5 +28,6 @@ CREATE TABLE IF NOT EXISTS complaints (
     category VARCHAR(50) NOT NULL,
     description TEXT NOT NULL,
     adminNote TEXT,
+    isResolved BOOLEAN DEFAULT FALSE,
     createdAt BIGINT NOT NULL
 );
