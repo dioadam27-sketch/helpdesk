@@ -12,6 +12,20 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
+  const formatDate = (timestamp: string) => {
+    if (!timestamp) return '-';
+    const isNumeric = /^\d+$/.test(timestamp);
+    const date = new Date(isNumeric ? parseInt(timestamp) : timestamp);
+    
+    if (isNaN(date.getTime())) return '-';
+
+    return date.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
   const getStatusBadge = (status: RequestStatus) => {
     switch (status) {
       case RequestStatus.APPROVED: 
@@ -25,7 +39,7 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
 
   const filteredRequests = requests.filter(req => {
     const term = searchTerm.toLowerCase();
-    const dateStr = new Date(req.date).toLocaleDateString().toLowerCase();
+    const dateStr = formatDate(req.date).toLowerCase();
     return (
       req.studentName.toLowerCase().includes(term) ||
       req.courseName.toLowerCase().includes(term) ||
@@ -41,7 +55,7 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
 
   const filteredComplaints = complaints.filter(comp => {
     const term = searchTerm.toLowerCase();
-    const dateStr = new Date(comp.createdAt).toLocaleDateString().toLowerCase();
+    const dateStr = formatDate(comp.createdAt).toLowerCase();
     return (
       comp.studentName.toLowerCase().includes(term) ||
       comp.category.toLowerCase().includes(term) ||
@@ -120,7 +134,7 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
                    {/* Row 1: Status & Date */}
                    <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-100">
                       {getStatusBadge(req.status)}
-                      <span className="text-[10px] font-bold text-slate-400">{new Date(req.date).toLocaleDateString()}</span>
+                      <span className="text-[10px] font-bold text-slate-400">{formatDate(req.date)}</span>
                    </div>
                    
                    {/* Row 2: Student Info */}
@@ -181,7 +195,13 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded uppercase">{comp.category}</span>
-                        <span className="text-[10px] font-bold text-slate-400">{new Date(comp.createdAt).toLocaleDateString()}</span>
+                        {comp.isResolved && (
+                          <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" />
+                            TERTANGANI
+                          </span>
+                        )}
+                        <span className="text-[10px] font-bold text-slate-400">{formatDate(comp.createdAt)}</span>
                     </div>
                   </div>
 

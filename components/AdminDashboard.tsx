@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LeaveRequest, RequestStatus, ComplaintRequest } from '../types';
-import { Check, X, Eye, Loader2, RefreshCw, Trash2, AlertTriangle, AlertOctagon, FileImage, ExternalLink, ImageOff, MessageSquareX, MessageSquare, CheckCircle2, ArrowUpDown, Calendar, Download } from 'lucide-react';
+import { Check, X, Eye, Loader2, RefreshCw, Trash2, AlertTriangle, AlertOctagon, FileImage, ExternalLink, ImageOff, MessageSquareX, MessageSquare, CheckCircle2, ArrowUpDown, Calendar, Download, Search } from 'lucide-react';
 import { api } from '../services/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -9,7 +9,7 @@ interface AdminDashboardProps {
   requests: LeaveRequest[];
   complaints?: ComplaintRequest[];
   onUpdateStatus: (id: string, status: RequestStatus, reason?: string) => void;
-  onUpdateComplaint: (id: string, note: string) => void;
+  onUpdateComplaint: (id: string, note?: string, isResolved?: boolean) => void;
   onRefresh: () => void;
   onDeleteRequest: (id: string) => void;
   onDeleteComplaint: (id: string) => void;
@@ -34,6 +34,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
   const [complaintNote, setComplaintNote] = useState('');
   
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
@@ -74,7 +77,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
       doc.save(`Data_Izin_Masuk_${new Date().toISOString().split('T')[0]}.pdf`);
 
     } else {
-      const tableColumn = ["ID", "Tanggal", "Nama", "NIM", "Kelas", "Kategori", "Deskripsi", "Tanggapan"];
+      const tableColumn = ["ID", "Tanggal", "Nama", "NIM", "Kelas", "Kategori", "Deskripsi", "Tanggapan", "Status"];
       const tableRows: any[] = [];
 
       complaints.forEach(comp => {
@@ -94,7 +97,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
           comp.studentClass,
           comp.category,
           comp.description,
-          comp.adminNote || '-'
+          comp.adminNote || '-',
+          comp.isResolved ? 'Tertangani' : 'Belum'
         ];
         tableRows.push(complaintData);
       });
@@ -200,6 +204,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
     }
   }
 
+  const handleToggleResolved = (id: string, currentStatus?: boolean) => {
+    onUpdateComplaint(id, undefined, !currentStatus);
+  };
+
   const renderReasonText = (text: any) => {
     if (text === null || text === undefined || text === '') return <span className="text-slate-400 italic">-</span>;
     const textStr = String(text);
@@ -218,8 +226,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
   };
 
   const getSortedRequests = () => {
-    const sorted = [...requests];
-    return sorted.sort((a, b) => {
+    let filtered = [...requests];
+    
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(req => 
+        req.studentName.toLowerCase().includes(term) ||
+        req.studentId.toLowerCase().includes(term) ||
+        req.courseName.toLowerCase().includes(term) ||
+        req.studentClass.toLowerCase().includes(term)
+      );
+    }
+
+    return filtered.sort((a, b) => {
       const dateA = new Date(Number(a.createdAt) || 0).getTime();
       const dateB = new Date(Number(b.createdAt) || 0).getTime();
       return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
@@ -227,8 +246,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
   };
 
   const getSortedComplaints = () => {
-    const sorted = [...complaints];
-    return sorted.sort((a, b) => {
+    let filtered = [...complaints];
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(comp => 
+        comp.studentName.toLowerCase().includes(term) ||
+        comp.studentId.toLowerCase().includes(term) ||
+        comp.category.toLowerCase().includes(term) ||
+        comp.description.toLowerCase().includes(term)
+      );
+    }
+
+    return filtered.sort((a, b) => {
       const dateA = new Date(a.createdAt).getTime();
       const dateB = new Date(b.createdAt).getTime();
       return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
@@ -266,7 +296,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
              EXPORT
            </button>
            <button 
-             onClick={() => setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest')}
+             onClick={() => { setSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest'); setCurrentPage(1); }}
              className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 shadow-sm text-xs font-bold text-slate-600 transition-colors"
            >
              <ArrowUpDown className="w-3.5 h-3.5" />
@@ -279,14 +309,44 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
       </div>
 
       <div className="flex gap-2">
-         <button onClick={() => setActiveTab('requests')} className={`flex-1 py-3 text-xs font-bold uppercase border-b-2 transition-colors ${activeTab === 'requests' ? 'border-[#003B73] text-[#003B73]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Izin Masuk</button>
-         <button onClick={() => setActiveTab('complaints')} className={`flex-1 py-3 text-xs font-bold uppercase border-b-2 transition-colors ${activeTab === 'complaints' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Komplain</button>
+         <button onClick={() => { setActiveTab('requests'); setCurrentPage(1); setSearchTerm(''); }} className={`flex-1 py-3 text-xs font-bold uppercase border-b-2 transition-colors ${activeTab === 'requests' ? 'border-[#003B73] text-[#003B73]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Izin Masuk</button>
+         <button onClick={() => { setActiveTab('complaints'); setCurrentPage(1); setSearchTerm(''); }} className={`flex-1 py-3 text-xs font-bold uppercase border-b-2 transition-colors ${activeTab === 'complaints' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>Komplain</button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="h-4 w-4 text-slate-400" />
+        </div>
+        <input
+          type="text"
+          className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-xl bg-white text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#003B73]/20 focus:border-[#003B73] transition-all"
+          placeholder={`Cari ${activeTab === 'requests' ? 'nama, NIM, atau matkul' : 'nama, NIM, atau kategori'}...`}
+          value={searchTerm}
+          onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+        />
+        {searchTerm && (
+          <button 
+            onClick={() => setSearchTerm('')}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {activeTab === 'requests' && (
         <div className="grid gap-4">
-          {getSortedRequests().map((req) => (
-             <div key={req.id} className="bg-white border border-slate-200 p-4 rounded-xl hover:border-[#003B73]/30 transition-all flex flex-col md:flex-row gap-4 shadow-sm">
+          {getSortedRequests().length === 0 ? (
+            <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
+               <Search className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+               <p className="text-slate-400 text-sm font-medium">
+                 {searchTerm ? `TIDAK ADA HASIL UNTUK "${searchTerm.toUpperCase()}"` : 'BELUM ADA DATA PERMOHONAN'}
+               </p>
+            </div>
+          ) : (
+            getSortedRequests().slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((req) => (
+               <div key={req.id} className="bg-white border border-slate-200 p-4 rounded-xl hover:border-[#003B73]/30 transition-all flex flex-col md:flex-row gap-4 shadow-sm">
                 <div className="flex-1 min-w-0">
                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${req.status === RequestStatus.APPROVED ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : req.status === RequestStatus.REJECTED ? 'bg-rose-50 border-rose-200 text-rose-600' : 'bg-amber-50 border-amber-200 text-amber-600'}`}>
@@ -412,18 +472,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
                    </button>
                 </div>
              </div>
-          ))}
+          )))}
         </div>
       )}
 
       {activeTab === 'complaints' && (
         <div className="grid gap-4">
-           {getSortedComplaints().map((comp) => (
-              <div key={comp.id} className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col md:flex-row gap-4 shadow-sm">
+           {getSortedComplaints().length === 0 ? (
+             <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
+                <Search className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-400 text-sm font-medium">
+                  {searchTerm ? `TIDAK ADA HASIL UNTUK "${searchTerm.toUpperCase()}"` : 'BELUM ADA DATA KOMPLAIN'}
+                </p>
+             </div>
+           ) : (
+             getSortedComplaints().slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((comp) => (
+                <div key={comp.id} className="bg-white border border-slate-200 p-4 rounded-xl flex flex-col md:flex-row gap-4 shadow-sm">
                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                        <AlertTriangle className="w-3 h-3 text-amber-500" />
                        <span className="text-xs font-bold text-amber-600">{comp.category}</span>
+                       {comp.isResolved && (
+                         <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 rounded flex items-center gap-1">
+                           <CheckCircle2 className="w-3 h-3" />
+                           TERTANGANI
+                         </span>
+                       )}
                        <span className="ml-auto flex items-center gap-1 text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">
                          <Calendar className="w-3 h-3" />
                          {formatDate(comp.createdAt)}
@@ -476,9 +550,45 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
                          </div>
                       </div>
                     )}
+
+                    {/* Inline Delete Confirmation */}
+                    {confirmDeleteId === comp.id && deleteType === 'complaint' && (
+                      <div className="mt-4 p-4 bg-rose-50 rounded-lg border border-rose-100 animate-slideDown">
+                         <div className="flex flex-col items-center text-center space-y-3">
+                            <div className="flex items-center gap-2 text-rose-600 font-bold text-sm">
+                               <AlertOctagon className="w-5 h-5" />
+                               HAPUS DATA INI?
+                            </div>
+                            <p className="text-xs text-rose-500">Data yang dihapus tidak dapat dikembalikan lagi.</p>
+                            <div className="flex gap-3 w-full max-w-xs pt-1">
+                               <button 
+                                  onClick={() => { setConfirmDeleteId(null); setDeleteType(null); }}
+                                  className="flex-1 py-2 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold rounded border border-slate-200 transition-colors"
+                               >
+                                  BATAL
+                               </button>
+                               <button 
+                                  onClick={executeDelete}
+                                  className="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded shadow-sm transition-colors"
+                               >
+                                  YA, HAPUS
+                               </button>
+                            </div>
+                         </div>
+                      </div>
+                    )}
                  </div>
                  
                  <div className="flex flex-row md:flex-col gap-2 justify-start md:justify-center border-t md:border-t-0 md:border-l border-slate-100 pt-3 md:pt-0 md:pl-4 min-w-[130px]">
+                   <button 
+                      onClick={() => handleToggleResolved(comp.id, comp.isResolved)}
+                      className={`flex items-center justify-center gap-2 px-3 py-2 border rounded text-xs font-bold transition-colors flex-1 md:flex-auto ${comp.isResolved ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-white hover:bg-emerald-50 text-slate-600 border-slate-200'}`}
+                      title={comp.isResolved ? "Tandai Belum Tertangani" : "Tandai Sudah Tertangani"}
+                    >
+                      <CheckCircle2 className="w-3 h-3" />
+                      {comp.isResolved ? 'SELESAI' : 'TANGANI'}
+                   </button>
+                   
                    <button 
                       onClick={() => toggleComplaintResponse(comp.id, comp.adminNote)}
                       className={`flex items-center justify-center gap-2 px-3 py-2 border rounded text-xs font-bold transition-colors flex-1 md:flex-auto ${complaintTargetId === comp.id ? 'bg-blue-50 text-blue-700 border-blue-300' : 'bg-white hover:bg-blue-50 text-blue-600 border-blue-200'}`}
@@ -496,9 +606,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
                    </button>
                  </div>
               </div>
-           ))}
+           )))}
         </div>
       )}
+
+      {/* Pagination */}
+      <div className="flex justify-center items-center gap-4 pt-6 border-t border-slate-100">
+        <button 
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+          className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          SEBELUMNYA
+        </button>
+        
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-[#003B73]">HALAMAN {currentPage}</span>
+          <span className="text-xs text-slate-400">DARI {Math.ceil((activeTab === 'requests' ? getSortedRequests().length : getSortedComplaints().length) / ITEMS_PER_PAGE) || 1}</span>
+        </div>
+
+        <button 
+          disabled={currentPage >= Math.ceil((activeTab === 'requests' ? getSortedRequests().length : getSortedComplaints().length) / ITEMS_PER_PAGE)}
+          onClick={() => setCurrentPage(prev => prev + 1)}
+          className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+        >
+          SELANJUTNYA
+        </button>
+      </div>
 
       {/* Reject Modal */}
       {rejectModalOpen && (

@@ -52,7 +52,10 @@ export const api = {
         hasEvidence: !!r.evidenceUrl
       })) : [];
       
-      const complaints = Array.isArray(data.complaints) ? data.complaints : [];
+      const complaints = Array.isArray(data.complaints) ? data.complaints.map((c: any) => ({
+        ...c,
+        isResolved: c.isResolved === true || c.isResolved === 'true' || c.isResolved === 1 || c.isResolved === '1'
+      })) : [];
 
       // Cache metadata only
       localStorage.setItem('leaveRequests_lite', JSON.stringify(requests));
@@ -316,9 +319,18 @@ export const api = {
     } catch (error) { return false; }
   },
 
-  updateComplaint: async (id: string, note: string): Promise<boolean> => {
+  updateComplaint: async (id: string, note?: string, isResolved?: boolean): Promise<boolean> => {
     const local: ComplaintRequest[] = JSON.parse(localStorage.getItem('complaints') || '[]');
-    const updated = local.map(comp => comp.id === id ? { ...comp, adminNote: note } : comp);
+    const updated = local.map(comp => {
+      if (comp.id === id) {
+        return { 
+          ...comp, 
+          adminNote: note !== undefined ? note : comp.adminNote,
+          isResolved: isResolved !== undefined ? isResolved : comp.isResolved
+        };
+      }
+      return comp;
+    });
     localStorage.setItem('complaints', JSON.stringify(updated));
 
     if (!api.isConfigured()) return true;
@@ -329,7 +341,12 @@ export const api = {
         redirect: 'follow',
         credentials: 'omit',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'updateComplaint', id: id, adminNote: note })
+        body: JSON.stringify({ 
+          action: 'updateComplaint', 
+          id: id, 
+          adminNote: note,
+          isResolved: isResolved 
+        })
       });
       const result = await response.json();
       return result.status === 'success';

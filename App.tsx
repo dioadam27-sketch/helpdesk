@@ -7,7 +7,7 @@ import AdminDashboard from './components/AdminDashboard';
 import StudentMenu from './components/StudentMenu';
 import { LeaveRequest, RequestStatus, ComplaintRequest } from './types';
 import { api } from './services/api'; 
-import { UserCircle2, ShieldCheck, ArrowRight, Lock, KeyRound, X, Loader2, Unplug, CloudCog, GraduationCap, CheckCircle2 } from 'lucide-react';
+import { UserCircle2, ShieldCheck, ArrowRight, Lock, KeyRound, X, Loader2, Unplug, CloudCog, GraduationCap, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 
 type UserRole = 'student' | 'admin' | null;
 type View = 'menu' | 'form' | 'history' | 'admin' | 'complain';
@@ -30,6 +30,7 @@ const App: React.FC = () => {
   const [authError, setAuthError] = useState('');
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isSuccessAccordionExpanded, setIsSuccessAccordionExpanded] = useState(true);
   const [showMigrationConfirm, setShowMigrationConfirm] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
   
@@ -40,12 +41,15 @@ const App: React.FC = () => {
   const [logoError, setLogoError] = useState(false);
   const [isLongLoading, setIsLongLoading] = useState(false);
 
+  // Success modal auto-hide disabled as per user request
+  /*
   useEffect(() => {
     if (showSuccessModal) {
       const timer = setTimeout(() => setShowSuccessModal(false), 5000);
       return () => clearTimeout(timer);
     }
   }, [showSuccessModal]);
+  */
 
   const handleLogoLoadError = () => {
     if (logoSrc === LOGO_MAIN) {
@@ -143,12 +147,16 @@ const App: React.FC = () => {
     }
   };
 
-  const handleComplaintUpdate = async (id: string, note: string) => {
+  const handleComplaintUpdate = async (id: string, note?: string, isResolved?: boolean) => {
     setComplaints(prev => prev.map(comp => 
-      comp.id === id ? { ...comp, adminNote: note } : comp
+      comp.id === id ? { 
+        ...comp, 
+        adminNote: note !== undefined ? note : comp.adminNote,
+        isResolved: isResolved !== undefined ? isResolved : comp.isResolved
+      } : comp
     ));
 
-    const success = await api.updateComplaint(id, note);
+    const success = await api.updateComplaint(id, note, isResolved);
     if (!success) {
        console.warn("Update complaint offline");
     }
@@ -329,6 +337,70 @@ const App: React.FC = () => {
       
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4 animate-fadeIn relative">
         
+        {/* Success Notification - Accordion Style Banner */}
+        {showSuccessModal && (
+          <div className="mb-6 animate-slideDown">
+            <div className="bg-white border border-emerald-200 rounded-2xl shadow-sm overflow-hidden">
+              {/* Accordion Header */}
+              <button 
+                onClick={() => setIsSuccessAccordionExpanded(!isSuccessAccordionExpanded)}
+                className="w-full bg-emerald-50 px-5 py-4 flex items-center justify-between border-b border-emerald-100 hover:bg-emerald-100/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center border border-emerald-100 shadow-sm">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <span className="font-bold text-emerald-800 text-base tracking-tight">Berhasil Terkirim!</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {isSuccessAccordionExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-emerald-500" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-emerald-500" />
+                  )}
+                  <div className="w-px h-4 bg-emerald-200 mx-1"></div>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowSuccessModal(false);
+                    }}
+                    className="p-1 text-emerald-400 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-all"
+                    title="Hapus Notifikasi"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </button>
+
+              {/* Accordion Body */}
+              {isSuccessAccordionExpanded && (
+                <div className="p-6 animate-fadeIn">
+                  <p className="text-slate-600 text-sm leading-relaxed mb-6">
+                    Data Anda telah kami terima dengan baik. Silakan cek menu <strong className="text-[#003B73]">Riwayat</strong> secara berkala untuk memantau status permohonan Anda.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setCurrentView('history');
+                        setShowSuccessModal(false);
+                      }}
+                      className="flex-1 py-3 bg-[#003B73] hover:bg-[#004b91] text-white font-bold rounded-xl transition-all text-xs uppercase tracking-widest shadow-sm active:scale-[0.98]"
+                    >
+                      Lihat Riwayat
+                    </button>
+                    <button
+                      onClick={() => setShowSuccessModal(false)}
+                      className="flex-1 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-xl transition-all text-xs uppercase tracking-widest shadow-sm active:scale-[0.98]"
+                    >
+                      Tutup
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Syncing Indicator */}
         {isSyncing && (
           <div className="absolute top-0 right-8 -mt-2 flex items-center gap-2 text-[10px] text-slate-500 font-mono animate-pulse bg-white/80 px-2 py-1 rounded-full border border-slate-200 shadow-sm">
@@ -538,40 +610,7 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Success Notification (Top Toast) */}
-        {showSuccessModal && (
-          <div className="fixed top-24 left-0 right-0 z-[60] flex justify-center px-4 pointer-events-none animate-slideDown">
-            <div className="bg-white border border-emerald-100 rounded-2xl p-4 max-w-sm w-full shadow-2xl flex items-start gap-4 pointer-events-auto relative overflow-hidden">
-               {/* Progress bar effect */}
-               <div className="absolute bottom-0 left-0 h-1 bg-emerald-500 animate-progress"></div>
-               
-               <div className="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center shrink-0 border border-emerald-100">
-                 <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-               </div>
-               
-               <div className="flex-grow">
-                 <h3 className="text-sm font-bold text-slate-800 mb-1">Berhasil Terkirim!</h3>
-                 <p className="text-slate-500 text-[11px] leading-relaxed mb-2">
-                   Data diterima. Silakan cek menu <strong>Riwayat</strong> secara berkala.
-                 </p>
-                 <button
-                   onClick={() => setShowSuccessModal(false)}
-                   className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider"
-                 >
-                   Tutup
-                 </button>
-               </div>
-
-               <button 
-                 onClick={() => setShowSuccessModal(false)}
-                 className="text-slate-400 hover:text-slate-600 transition-colors"
-               >
-                 <X className="w-4 h-4" />
-               </button>
-            </div>
-          </div>
-        )}
-
+        {/* Success Notification removed from here as it is now an accordion banner at the top */}
       </main>
     </div>
   );

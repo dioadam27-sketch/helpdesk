@@ -22,6 +22,7 @@ export interface LeaveRequest {
   type: LeaveType;
   reason: string;
   evidenceBase64?: string; // Optional karena lazy load
+  evidenceUrl?: string; // URL bukti dari server
   hasEvidence?: boolean; // Flag untuk UI
   generatedLetter?: string;
   status: RequestStatus;
@@ -37,5 +38,6 @@ export interface ComplaintRequest {
   category: 'Fasilitas' | 'Akademik' | 'Pelayanan' | 'Lainnya';
   description: string;
   adminNote?: string; // Catatan penanganan dari admin
+  isResolved?: boolean; // Status penanganan
   createdAt: number;
 }
