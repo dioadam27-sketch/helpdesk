@@ -508,7 +508,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
                          {formatDate(comp.createdAt)}
                        </span>
                     </div>
-                    <p className="text-sm text-slate-700 leading-relaxed font-medium line-clamp-3">{comp.description}</p>
+                    <p className="text-sm text-slate-700 leading-relaxed font-medium break-words whitespace-pre-wrap">{comp.description}</p>
                     <p className="text-xs text-slate-400 mt-2">Oleh: {comp.studentName} ({comp.studentId} - {comp.studentClass})</p>
 
                      {comp.adminNote && comp.adminNote.trim() !== '' && (
@@ -516,7 +516,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
                           <MessageSquare className="w-4 h-4 text-[#003B73] shrink-0 mt-0.5" />
                           <div className="flex flex-col">
                              <span className="text-[10px] text-[#003B73] font-bold uppercase mb-0.5">Tanggapan Admin</span>
-                             <p className="text-xs text-slate-600">"{comp.adminNote}"</p>
+                             <p className="text-xs text-slate-600 break-words whitespace-pre-wrap">"{comp.adminNote}"</p>
                           </div>
                        </div>
                     )}

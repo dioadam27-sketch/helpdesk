@@ -221,7 +221,7 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
 
                   <div className="flex gap-3">
                      <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                     <p className="text-sm text-slate-700 leading-relaxed">{comp.description}</p>
+                     <p className="text-sm text-slate-700 leading-relaxed break-words whitespace-pre-wrap flex-1">{comp.description}</p>
                   </div>
 
                   {/* Display Admin Response if available */}
@@ -231,7 +231,7 @@ const History: React.FC<HistoryProps> = ({ requests, complaints = [] }) => {
                             <MessageSquare className="w-4 h-4 text-[#003B73] shrink-0 mt-0.5" />
                             <div className="flex flex-col">
                                 <span className="text-[10px] text-[#003B73] font-bold uppercase mb-1 tracking-wider">Tanggapan Admin</span>
-                                <p className="text-xs text-slate-700 leading-relaxed">"{comp.adminNote}"</p>
+                                <p className="text-xs text-slate-700 leading-relaxed break-words whitespace-pre-wrap">"{comp.adminNote}"</p>
                             </div>
                         </div>
                     </div>
