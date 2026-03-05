@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import LeaveForm from './components/LeaveForm';
 import ComplainForm from './components/ComplainForm';
@@ -17,11 +18,29 @@ const LOGO_MAIN = "https://pkkii.pendidikan.unair.ac.id/website/logo.jpeg";
 const LOGO_FALLBACK = "https://upload.wikimedia.org/wikipedia/commons/e/e6/Logo_Universitas_Airlangga.png";
 
 const App: React.FC = () => {
-  const [userRole, setUserRole] = useState<UserRole>(null);
-  const [currentView, setCurrentView] = useState<View>('menu');
+  const [userRole, setUserRole] = useState<UserRole>(() => {
+    const savedRole = localStorage.getItem('userRole');
+    return (savedRole as UserRole) || null;
+  });
+  const navigate = useNavigate();
+  const location = useLocation();
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [complaints, setComplaints] = useState<ComplaintRequest[]>([]);
   
+  useEffect(() => {
+    if (userRole) {
+      localStorage.setItem('userRole', userRole);
+    } else {
+      localStorage.removeItem('userRole');
+    }
+  }, [userRole]);
+
+  useEffect(() => {
+    if (userRole && location.pathname === '/') {
+      navigate(userRole === 'admin' ? '/admin' : '/menu');
+    }
+  }, [userRole, location.pathname, navigate]);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   
@@ -70,10 +89,10 @@ const App: React.FC = () => {
   }, [isLoading]);
 
   useEffect(() => {
-    if ((userRole === 'student' && currentView === 'history') || userRole === 'admin') {
+    if ((userRole === 'student' && location.pathname === '/history') || userRole === 'admin') {
       loadDataSmart();
     }
-  }, [userRole, currentView]);
+  }, [userRole, location.pathname]);
 
   const loadDataSmart = async () => {
     const cachedData = api.getLocalData();
@@ -101,7 +120,7 @@ const App: React.FC = () => {
 
   const handleFormSubmit = async (newRequest: LeaveRequest) => {
     // Optimistic UI Update: Show success immediately
-    setCurrentView('history'); 
+    navigate('/history'); 
     setShowSuccessModal(true); 
     
     // Add to local state immediately so it shows up in History
@@ -120,7 +139,7 @@ const App: React.FC = () => {
 
   const handleComplaintSubmit = async (complaint: ComplaintRequest) => {
     // Optimistic UI Update: Show success immediately
-    setCurrentView('history'); 
+    navigate('/history'); 
     setShowSuccessModal(true);
 
     // Add to local state immediately
@@ -175,7 +194,7 @@ const App: React.FC = () => {
   const handleRoleSelect = (role: 'student' | 'admin') => {
     if (role === 'student') {
       setUserRole('student');
-      setCurrentView('menu');
+      navigate('/menu');
     } else {
       setShowAdminAuth(true);
       setAuthError('');
@@ -187,7 +206,7 @@ const App: React.FC = () => {
     e.preventDefault();
     if (adminPassword === '112233') {
       setUserRole('admin');
-      setCurrentView('admin');
+      navigate('/admin');
       setShowAdminAuth(false);
     } else {
       setAuthError('Password salah. Akses ditolak.');
@@ -196,7 +215,7 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     setUserRole(null);
-    setCurrentView('menu');
+    navigate('/');
     setRequests([]);
     setComplaints([]);
   };
@@ -347,8 +366,6 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen pb-12 text-slate-800">
       <Navbar 
-        currentView={currentView} 
-        setCurrentView={setCurrentView} 
         userRole={userRole}
         onLogout={handleLogout}
         logoSrc={logoSrc}
@@ -400,7 +417,7 @@ const App: React.FC = () => {
                   <div className="flex gap-3">
                     <button
                       onClick={() => {
-                        setCurrentView('history');
+                        navigate('/history');
                         setShowSuccessModal(false);
                       }}
                       className="flex-1 py-3 bg-[#003B73] hover:bg-[#004b91] text-white font-bold rounded-xl transition-all text-xs uppercase tracking-widest shadow-sm active:scale-[0.98]"
@@ -481,32 +498,28 @@ const App: React.FC = () => {
              </div>
            </div>
         ) : (
-          <>
-            {userRole === 'student' && currentView === 'menu' && (
+          <Routes>
+            <Route path="/menu" element={
               <StudentMenu 
-                onSelectLeave={() => setCurrentView('form')}
-                onSelectComplain={() => setCurrentView('complain')}
+                onSelectLeave={() => navigate('/form')}
+                onSelectComplain={() => navigate('/complain')}
               />
-            )}
-
-            {userRole === 'student' && currentView === 'form' && (
+            } />
+            <Route path="/form" element={
               <div className="space-y-6">
                 <LeaveForm onSubmit={handleFormSubmit} />
               </div>
-            )}
-            
-            {userRole === 'student' && currentView === 'history' && (
+            } />
+            <Route path="/history" element={
               <History 
                 requests={requests} 
                 complaints={complaints} 
               />
-            )}
-
-            {userRole === 'student' && currentView === 'complain' && (
+            } />
+            <Route path="/complain" element={
               <ComplainForm onSubmit={handleComplaintSubmit} />
-            )}
-
-            {userRole === 'admin' && (
+            } />
+            <Route path="/admin" element={
               <>
                 <div className="mb-4 flex justify-end">
                    <button 
@@ -543,8 +556,8 @@ const App: React.FC = () => {
                   onDeleteComplaint={handleDeleteComplaint}
                 />
               </>
-            )}
-          </>
+            } />
+          </Routes>
         )}
 
         {/* Migration Confirmation Modal */}

@@ -1,15 +1,15 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { LogOut, LayoutDashboard, PlusCircle, History, AlertTriangle, LayoutGrid } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'menu' | 'form' | 'history' | 'admin' | 'complain';
-  setCurrentView: (view: any) => void;
   userRole: 'student' | 'admin' | null;
   onLogout: () => void;
   logoSrc: string;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, userRole, onLogout, logoSrc }) => {
+const Navbar: React.FC<NavbarProps> = ({ userRole, onLogout, logoSrc }) => {
+  const location = useLocation();
   if (!userRole) return null;
 
   return (
@@ -17,7 +17,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, userRole, 
       <nav className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
         
         {/* LOGO */}
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => userRole === 'student' && setCurrentView('menu')}>
+        <Link to="/menu" className="flex items-center gap-3">
           <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-white/20">
              <img src={logoSrc} alt="Logo" className="w-full h-full object-contain" />
           </div>
@@ -27,16 +27,16 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, userRole, 
             </h1>
             <span className="text-[10px] text-blue-200 font-semibold tracking-wider">UNIVERSITAS AIRLANGGA</span>
           </div>
-        </div>
+        </Link>
 
         {/* MENU */}
         <div className="flex gap-1 bg-[#002d5a] p-1 rounded-lg border border-[#004b91]">
            {userRole === 'student' && (
              <>
-               <NavBtn active={currentView === 'menu'} onClick={() => setCurrentView('menu')} icon={LayoutGrid}>MENU</NavBtn>
-               <NavBtn active={currentView === 'form'} onClick={() => setCurrentView('form')} icon={PlusCircle}>SURAT</NavBtn>
-               <NavBtn active={currentView === 'history'} onClick={() => setCurrentView('history')} icon={History}>RIWAYAT</NavBtn>
-               <NavBtn active={currentView === 'complain'} onClick={() => setCurrentView('complain')} icon={AlertTriangle}>KOMPLAIN</NavBtn>
+               <NavBtn to="/menu" active={location.pathname === '/menu'} icon={LayoutGrid}>MENU</NavBtn>
+               <NavBtn to="/form" active={location.pathname === '/form'} icon={PlusCircle}>SURAT</NavBtn>
+               <NavBtn to="/history" active={location.pathname === '/history'} icon={History}>RIWAYAT</NavBtn>
+               <NavBtn to="/complain" active={location.pathname === '/complain'} icon={AlertTriangle}>KOMPLAIN</NavBtn>
              </>
            )}
            {userRole === 'admin' && (
@@ -58,14 +58,14 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, userRole, 
   );
 };
 
-const NavBtn = ({ active, onClick, children, icon: Icon }: any) => (
-  <button 
-    onClick={onClick}
+const NavBtn = ({ active, to, children, icon: Icon }: any) => (
+  <Link 
+    to={to}
     className={`px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded flex items-center gap-2 transition-all ${active ? 'bg-[#FFC700] text-[#003B73] shadow-sm' : 'text-blue-200 hover:text-white hover:bg-white/5'}`}
   >
     <Icon className="w-3.5 h-3.5" />
     {children}
-  </button>
+  </Link>
 );
 
 export default Navbar;

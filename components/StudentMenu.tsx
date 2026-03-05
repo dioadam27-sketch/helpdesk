@@ -72,6 +72,34 @@ const StudentMenu: React.FC<StudentMenuProps> = ({ onSelectLeave, onSelectCompla
           </div>
         </button>
 
+        {/* Card Download Form */}
+        <a 
+          href="https://docs.google.com/document/d/1_OPrUEvodEgeMeqmbCyYhciBYMTwLSXL/edit"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group relative h-64 text-left p-8 rounded-[2rem] bg-white border border-slate-200 overflow-hidden hover:border-emerald-500 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 md:col-span-2"
+        >
+          {/* Background Gradient */}
+          <div className="absolute top-0 right-0 p-24 bg-emerald-500/5 rounded-full blur-3xl -mr-12 -mt-12 group-hover:bg-emerald-500/10 transition-all"></div>
+
+          <div className="relative z-10 flex flex-col h-full">
+            <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center border border-emerald-100 mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+              <FileSignature className="w-7 h-7 text-emerald-600" />
+            </div>
+            
+            <h3 className="text-xl font-bold text-slate-800 mb-2 group-hover:text-emerald-600 transition-colors">
+              Download Form Surat Izin
+            </h3>
+            <p className="text-slate-500 text-sm leading-relaxed mb-4 flex-grow">
+              Template resmi permohonan izin kuliah.
+            </p>
+            
+            <div className="flex items-center text-xs font-bold text-emerald-600 tracking-wider uppercase mt-auto">
+              Download Form <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform" />
+            </div>
+          </div>
+        </a>
+
       </div>
     </div>
   );
