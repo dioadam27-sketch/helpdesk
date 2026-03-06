@@ -45,15 +45,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
   };
 
   const handleExport = () => {
-    const doc = new jsPDF();
+    const doc = new jsPDF({ orientation: 'landscape' });
 
     if (activeTab === 'requests') {
-      const tableColumn = ["ID", "Tanggal", "Nama", "NIM", "Kelas", "Matkul", "Jenis", "Alasan", "Status"];
+      const tableColumn = ["Tanggal", "Nama", "NIM", "Kelas", "Matkul", "Jenis", "Alasan", "Status", "Bukti"];
       const tableRows: any[] = [];
 
       requests.forEach(req => {
         const requestData = [
-          req.id,
           new Date(Number(req.createdAt) || 0).toLocaleString('id-ID'),
           req.studentName,
           req.studentId,
@@ -61,7 +60,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
           req.courseName,
           req.type,
           req.reason,
-          req.status
+          req.status,
+          req.evidenceUrl || '-'
         ];
         tableRows.push(requestData);
       });
@@ -72,7 +72,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ requests, complaints = 
         body: tableRows,
         startY: 20,
         styles: { fontSize: 8 },
-        headStyles: { fillColor: [0, 59, 115] } // #003B73
+        headStyles: { fillColor: [0, 59, 115] }, // #003B73
+        didDrawCell: (data) => {
+          if (data.section === 'body' && data.column.index === 8 && data.cell.text[0] !== '-') {
+            const url = data.cell.text[0];
+            doc.setTextColor(0, 0, 255);
+            // Ensure the URL is valid before adding link
+            if (url && typeof url === 'string' && url.startsWith('http')) {
+              doc.textWithLink('Link Bukti', data.cell.x + 2, data.cell.y + data.cell.height / 2, { url: url });
+            } else {
+              doc.text('Link Invalid', data.cell.x + 2, data.cell.y + data.cell.height / 2);
+            }
+            doc.setTextColor(0, 0, 0);
+          }
+        }
       });
       doc.save(`Data_Izin_Masuk_${new Date().toISOString().split('T')[0]}.pdf`);
 
